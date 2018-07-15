@@ -18,9 +18,10 @@
 
 #include "stdafx.h"
 #include "ServiceMain.h"
+#include "RegistryManager.h"
 
 
-ServiceMain::ServiceMain(std::wstring& serviceName): ServiceBase(serviceName)
+ServiceMain::ServiceMain(std::wstring& serviceName) : ServiceBase(serviceName)
 {
 }
 
@@ -31,13 +32,28 @@ ServiceMain::~ServiceMain()
 //Get called when the service starts (argv[0] is the service name)
 void ServiceMain::OnStart(DWORD argc, PWSTR* argv)
 {
+	_serviceName = argv[0];
+	_processManager.SetProcessStartInfo(RegistryManager::ReadProcessStartInfoFromRegistry(_serviceName));
 
+	//Check the given arguments of the service (like startInUserSession, etc)
+	for (uint16_t i = 1; i < argc; i++)
+	{
+		if (_wcsicmp(argv[i], L"-startInUserSession") == 0)
+		{
+			_processManager.SetStartMode(true);
+		}
+	}
+
+	_processManager.StartProcess();
 }
 
 //Get called when the service shold stop
 void ServiceMain::OnStop()
 {
-
+	if (!_processManager.StopProcess())
+	{
+		_processManager.KillProcess();
+	}
 }
 
 void ServiceMain::OnShutdown()

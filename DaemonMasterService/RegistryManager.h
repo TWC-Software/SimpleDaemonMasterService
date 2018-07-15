@@ -1,4 +1,4 @@
-//  DaemonMasterService: ServiceMain
+﻿//  DaemonMasterService: RegistryManager
 //  
 //  This file is part of DeamonMasterService.
 // 
@@ -18,22 +18,19 @@
 
 #pragma once
 
-#include "ServiceBase.h"
-#include "ProcessManager.h"
+class ProcessStartInfo;
+struct ProcessInfo;
 
-class ServiceMain : public ServiceBase
+class RegistryManager
 {
 public:
-	ServiceMain(std::wstring& serviceName);
-	~ServiceMain();
+	static std::wstring ReadString(const HKEY& hKey, const std::wstring& valueName);
+	static DWORD ReadDWORD(const HKEY& hKey, const std::wstring& valueName);
+	static bool ReadBool(const HKEY& hKey, const std::wstring& valueName);
+	static void WriteString(const HKEY& hKey, const std::wstring& valueName, const std::wstring& value);
+	static void WriteDWORD(const HKEY& hKey, const std::wstring& valueName, const DWORD value);
+	static void WriteBool(const HKEY& hKey, const std::wstring& valueName, const bool value);
 
-protected:
-	void OnStart(DWORD argc, PWSTR* argv) override;
-	void OnStop() override;
-	void OnShutdown() override;
-
-private:
-	ProcessManager _processManager;
-	std::wstring _serviceName;
+	static ProcessStartInfo ReadProcessStartInfoFromRegistry(const std::wstring& serviceName);
+	static void WriteProcessInformationInRegistry(const std::wstring& serviceName, const ProcessInfo& processInfo);
 };
-

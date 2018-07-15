@@ -1,4 +1,4 @@
-//  DaemonMasterService: ServiceMain
+//  DaemonMasterService: ProcessManager
 //  
 //  This file is part of DeamonMasterService.
 // 
@@ -16,24 +16,40 @@
 //   along with DeamonMasterService.  If not, see <http://www.gnu.org/licenses/>.
 /////////////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
-#include "ServiceBase.h"
+#include "stdafx.h"
 #include "ProcessManager.h"
 
-class ServiceMain : public ServiceBase
+
+ProcessManager::ProcessManager()
 {
-public:
-	ServiceMain(std::wstring& serviceName);
-	~ServiceMain();
+}
 
-protected:
-	void OnStart(DWORD argc, PWSTR* argv) override;
-	void OnStop() override;
-	void OnShutdown() override;
+ProcessManager::~ProcessManager()
+{	
+}
 
-private:
-	ProcessManager _processManager;
-	std::wstring _serviceName;
-};
+//Set the process start infos
+void ProcessManager::SetProcessStartInfo(const ProcessStartInfo& processStartInfo)
+{
+	_processStartInfo = processStartInfo;
+}
 
+//Set start mode (start in user session)
+void ProcessManager::SetStartMode(bool startInUserSession)
+{
+	_startInUserSession = startInUserSession;
+}
+
+bool ProcessManager::StartProcess()
+{
+
+}
+
+bool ProcessManager::StopProcess()
+{
+
+}
+
+void ProcessManager::KillProcess()
+{
+}
