@@ -18,22 +18,41 @@
 
 #pragma once
 
-#include "ProcessStartInfo.h"
-
 class ProcessManager
 {
 public:
 	ProcessManager();
 	~ProcessManager();
 
-	void SetProcessStartInfo(const ProcessStartInfo& processStartInfo);
 	void SetStartMode(bool startInUserSession);
-	bool StartProcess();
+	bool StartProcess(const std::wstring& serviceName);
 	bool StopProcess();
 	void KillProcess();
 
 private:
-	ProcessStartInfo _processStartInfo;
-	bool _startInUserSession;
+	void StartInSession0();
+	void ReadProcessStartInfoFromRegistry(const std::wstring& serviceName);
+	
+	//Registry infos
+	std::wstring _fileDir{ L"" };
+	std::wstring _fileName{ L"" };
+	std::wstring _fullPath{ L"" };
+	std::wstring _params{ L"" };
+
+	bool _useLocalSystemAccount{ true };
+	bool _unlimitedRestarts{ false };
+	int _maxRestarts{ 3 };
+	int _restartCounterResetTime{ 0 };
+
+	bool _isConsoleApp{ false };
+	bool _useCtrlC{ false };
+
+	bool _assignAutoKillJob{ true };
+	int _processPriority{ 0 };
+	std::vector<wchar_t> _environmentVariables{ L'\0\0' };
+
+	//Process
+	PROCESS_INFORMATION _pi;
+	bool _startInUserSession{ false };
 };
 

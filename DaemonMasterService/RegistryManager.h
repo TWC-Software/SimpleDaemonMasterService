@@ -26,11 +26,16 @@ class RegistryManager
 public:
 	static std::wstring ReadString(const HKEY& hKey, const std::wstring& valueName);
 	static DWORD ReadDWORD(const HKEY& hKey, const std::wstring& valueName);
+	static ULONGLONG ReadQWORD(const HKEY& hKey, const std::wstring& valueName);
 	static bool ReadBool(const HKEY& hKey, const std::wstring& valueName);
+	static std::vector<std::wstring> ReadMultiString(const HKEY& hKey, const std::wstring& valueName);
 	static void WriteString(const HKEY& hKey, const std::wstring& valueName, const std::wstring& value);
 	static void WriteDWORD(const HKEY& hKey, const std::wstring& valueName, const DWORD value);
+	static void WriteQWORD(const HKEY& hKey, const std::wstring& valueName, const ULONGLONG value);
 	static void WriteBool(const HKEY& hKey, const std::wstring& valueName, const bool value);
+	static void WriteMultiString(const HKEY& hKey, const std::wstring& valueName, const std::vector<std::wstring>& value);
 
-	static ProcessStartInfo ReadProcessStartInfoFromRegistry(const std::wstring& serviceName);
 	static void WriteProcessInformationInRegistry(const std::wstring& serviceName, const ProcessInfo& processInfo);
+	static std::vector<std::wstring> ConvertMultiStringToWString(const std::vector<wchar_t>& data);
+	static std::vector<wchar_t> ConvertWStringToMultiString(const std::vector<std::wstring>& data);
 };

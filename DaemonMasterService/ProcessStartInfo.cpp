@@ -37,7 +37,7 @@ void ProcessStartInfo::SetFileDir(wstring fileDir)
 		}
 	}
 
-	this->_fileDir = fileDir;
+	_fileDir = fileDir;
 }
 
 
@@ -50,7 +50,7 @@ const wstring& ProcessStartInfo::GetFileName() const
 
 void ProcessStartInfo::SetFileName(const wstring& fileName)
 {
-	this->_fileName = fileName;
+	_fileName = fileName;
 }
 
 
@@ -63,7 +63,7 @@ const wstring& ProcessStartInfo::GetFullPath() const
 
 void ProcessStartInfo::SetFullPath(const wstring& fullPath)
 {
-	this->_fullPath = fullPath;
+	_fullPath = fullPath;
 }
 
 
@@ -76,7 +76,7 @@ const wstring& ProcessStartInfo::GetParameters() const
 
 void ProcessStartInfo::SetParameters(const wstring& params)
 {
-	this->_params = params;
+	_params = params;
 }
 
 
@@ -89,7 +89,7 @@ const bool ProcessStartInfo::GetUnlimitedRestarts() const
 
 void ProcessStartInfo::SetUnlimitedRestarts(const bool unlimitedRestarts)
 {
-	this->_unlimitedRestarts = unlimitedRestarts;
+	_unlimitedRestarts = unlimitedRestarts;
 }
 
 
@@ -102,7 +102,7 @@ const DWORD ProcessStartInfo::GetMaxRestarts() const
 
 void ProcessStartInfo::SetMaxRestarts(const unsigned long maxRestarts)
 {
-	this->_maxRestarts = maxRestarts;
+	_maxRestarts = maxRestarts;
 }
 
 
@@ -115,7 +115,7 @@ const DWORD ProcessStartInfo::GetRestartCounterResetTime() const
 
 void ProcessStartInfo::SetRestartCounterResetTime(const DWORD restartCounterResetTime)
 {
-	this->_restartCounterResetTime = restartCounterResetTime;
+	_restartCounterResetTime = restartCounterResetTime;
 }
 
 
@@ -128,7 +128,7 @@ const bool ProcessStartInfo::GetIsConsoleApp() const
 
 void ProcessStartInfo::SetIsConsoleApp(const bool isConsoleApp)
 {
-	this->_isConsoleApp = isConsoleApp;
+	_isConsoleApp = isConsoleApp;
 }
 
 
@@ -141,7 +141,7 @@ const bool ProcessStartInfo::GetUseCtrlC() const
 
 void ProcessStartInfo::SetUseCtrlC(const bool useCtrlC)
 {
-	this->_useCtrlC = useCtrlC;
+	_useCtrlC = useCtrlC;
 }
 
 
@@ -154,5 +154,18 @@ const bool ProcessStartInfo::GetAssignAutoKillJob() const
 
 void ProcessStartInfo::SetAssignAutoKillJob(const bool assignAutoKillJob)
 {
-	this->_assignAutoKillJob = assignAutoKillJob;
+	_assignAutoKillJob = assignAutoKillJob;
+}
+
+
+//------------------------------------------------------------------------------------------------------
+
+const int ProcessStartInfo::GetPriority() const
+{
+	return _priority;
+}
+
+void ProcessStartInfo::SetPriority(const int priority)
+{
+	_priority = priority;
 }

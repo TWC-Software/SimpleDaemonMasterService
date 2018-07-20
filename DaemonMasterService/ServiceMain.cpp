@@ -33,10 +33,9 @@ ServiceMain::~ServiceMain()
 void ServiceMain::OnStart(DWORD argc, PWSTR* argv)
 {
 	_serviceName = argv[0];
-	_processManager.SetProcessStartInfo(RegistryManager::ReadProcessStartInfoFromRegistry(_serviceName));
 
 	//Check the given arguments of the service (like startInUserSession, etc)
-	for (uint16_t i = 1; i < argc; i++)
+	for (size_t i = 1; i < argc; i++)
 	{
 		if (_wcsicmp(argv[i], L"-startInUserSession") == 0)
 		{
@@ -44,7 +43,7 @@ void ServiceMain::OnStart(DWORD argc, PWSTR* argv)
 		}
 	}
 
-	_processManager.StartProcess();
+	_processManager.StartProcess(_serviceName);
 }
 
 //Get called when the service shold stop

@@ -22,9 +22,7 @@
 #include "ProcessStartInfo.h"
 #include "ProcessStartInfo.h"
 
-#define REG_PATH L"SYSTEM\\CurrentControlSet\\Services\\"
-#define	PARAMS_SUBKEY L"\\Parameters"
-#define	PROCINFO_SUBKEY L"\\ProcessInfo"
+
 
 using namespace std;
 
@@ -82,11 +80,52 @@ DWORD RegistryManager::ReadDWORD(const HKEY& hKey, const wstring& valueName)
 	return data;
 }
 
+ULONGLONG RegistryManager::ReadQWORD(const HKEY& hKey, const wstring& valueName)
+{
+	LSTATUS retCode;
+	DWORD dataSize = sizeof(ULONGLONG);
+	DWORD data;
+
+	retCode = RegGetValueW(hKey, NULL, valueName.c_str(), RRF_RT_QWORD, NULL, &data, &dataSize);
+	if (retCode != ERROR_SUCCESS)
+	{
+		throw RegistryError("Cannot read the QWORD value from the registry.", retCode);
+	}
+
+	return data;
+}
+
 bool RegistryManager::ReadBool(const HKEY& hKey, const wstring& valueName)
 {
 	DWORD const result = ReadDWORD(hKey, valueName);
 
 	return result != 0;
+}
+
+vector<wstring> RegistryManager::ReadMultiString(const HKEY& hKey, const std::wstring& valueName)
+{
+	LSTATUS retCode;
+	DWORD dataSize;
+
+	//Get data size
+	retCode = RegGetValueW(hKey, NULL, valueName.c_str(), RRF_RT_REG_MULTI_SZ, nullptr, nullptr, &dataSize);
+	if (retCode != ERROR_SUCCESS)
+	{
+		throw RegistryError("Cannot acquire the multi-string size from the registry.", retCode);
+	}
+
+	//Create a vector that hold the double-NUL-terminated string and resize it to the right size
+	vector<wchar_t> data;
+	data.resize(dataSize / sizeof(wchar_t));
+
+	//The &data[0] is the address of the vector<wchar_t> internal buffer that will be written by the RegGetValue API.
+	retCode = RegGetValueW(hKey, NULL, valueName.c_str(), RRF_RT_REG_MULTI_SZ, nullptr, &data[0], &dataSize);
+	if (retCode != ERROR_SUCCESS)
+	{
+		throw RegistryError("Cannot read the multi-string from the registry.", retCode);
+	}
+
+	return ConvertMultiStringToWString(data);
 }
 
 
@@ -100,7 +139,7 @@ void RegistryManager::WriteString(const HKEY& hKey, const wstring& valueName, co
 	DWORD dataSize = {};
 
 	//Set data in reg
-	retCode = RegSetValueExW(hKey, valueName.c_str(), NULL, RRF_RT_REG_SZ, (LPBYTE)(value.c_str()), value.size() * sizeof(wchar_t));
+	retCode = RegSetValueExW(hKey, valueName.c_str(), NULL, RRF_RT_REG_SZ, LPBYTE(value.c_str()), value.size() * sizeof(wchar_t));
 	if (retCode != ERROR_SUCCESS)
 	{
 		throw RegistryError("Cannot write the string into the registry.", retCode);
@@ -118,54 +157,42 @@ void RegistryManager::WriteDWORD(const HKEY& hKey, const wstring& valueName, con
 	}
 }
 
+void RegistryManager::WriteQWORD(const HKEY& hKey, const wstring& valueName, const ULONGLONG value)
+{
+	LSTATUS retCode;
+
+	retCode = RegSetValueExW(hKey, valueName.c_str(), NULL, RRF_RT_QWORD, reinterpret_cast<LPBYTE>(value), sizeof(ULONGLONG));
+	if (retCode != ERROR_SUCCESS)
+	{
+		throw RegistryError("Cannot write the QWORD into the registry.", retCode);
+	}
+}
+
 void RegistryManager::WriteBool(const HKEY& hKey, const wstring& valueName, const bool value)
 {
 	WriteDWORD(hKey, valueName,value);
 }
 
+void RegistryManager::WriteMultiString(const HKEY& hKey, const wstring& valueName, const vector<wstring>& value)
+{
+	LSTATUS retCode;
+	DWORD dataSize = {};
+
+	vector<wchar_t> data = ConvertWStringToMultiString(value);
+
+	//Set data in reg
+	retCode      = RegSetValueExW(hKey, valueName.c_str(), NULL, RRF_RT_REG_SZ, reinterpret_cast<LPBYTE>(&data[0]), data.size() * sizeof(wchar_t));
+	if (retCode != ERROR_SUCCESS)
+	{
+		throw RegistryError("Cannot write the multi-string into the registry.", retCode);
+	}
+}
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                                   Other                                                         //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-ProcessStartInfo RegistryManager::ReadProcessStartInfoFromRegistry(const wstring& serviceName)
-{
-	const wstring regPath = REG_PATH + serviceName + PARAMS_SUBKEY;
-	ProcessStartInfo processStartInfo;
-	LSTATUS retCode;
-	HKEY hKey;
-
-
-	retCode = RegOpenKeyExW(HKEY_LOCAL_MACHINE, regPath.c_str(), 0, KEY_READ, &hKey);
-	if (retCode != ERROR_SUCCESS)
-	{
-		throw RegistryError("Cannot open the registry key.", retCode);
-	}
-
-	try
-	{
-		processStartInfo.SetFileDir(ReadString(hKey, L"FileDir"));
-		processStartInfo.SetFileName(ReadString(hKey, L"FileName"));
-		processStartInfo.SetFullPath(Functions::CombinePaths(processStartInfo.GetFileDir(), processStartInfo.GetFileName()));
-		processStartInfo.SetParameters(ReadString(hKey, L"Parameter"));
-
-		processStartInfo.SetIsConsoleApp(ReadBool(hKey, L"ConsoleApplication"));
-		processStartInfo.SetUseCtrlC(ReadBool(hKey, L"UseCtrlC"));
-
-		processStartInfo.SetMaxRestarts(ReadDWORD(hKey, L"MaxRestarts"));
-		processStartInfo.SetRestartCounterResetTime(ReadDWORD(hKey, L"CounterResetTime"));
-	}
-	//This catch only close the regkey and then throw the exception to the caller
-	catch(RegistryError)
-	{
-		RegCloseKey(hKey);
-		throw;
-	}
-
-	RegCloseKey(hKey);
-	return processStartInfo;
-}
 
 void RegistryManager::WriteProcessInformationInRegistry(const wstring& serviceName, const ProcessInfo& processInfo)
 {
@@ -194,4 +221,56 @@ void RegistryManager::WriteProcessInformationInRegistry(const wstring& serviceNa
 	//}
 
 	//RegCloseKey(hKey);
+}
+
+vector<wstring> RegistryManager::ConvertMultiStringToWString(const vector<wchar_t>& data)
+{
+	vector<wstring> result;
+
+	const wchar_t* dataPtr = &data[0];
+	while (*dataPtr != L'\0')
+	{
+		//Get the lenght of the cstring
+		const size_t stringLenght = wcslen(dataPtr);
+
+		//Adding the cstring to the result
+		result.push_back(wstring(dataPtr, stringLenght));
+
+		//Change the pointer to the begining of the next string
+		dataPtr += stringLenght + 1;
+	}
+
+	return result;
+}
+
+vector<wchar_t> RegistryManager::ConvertWStringToMultiString(const vector<wstring>& data)
+{
+	if(data.empty())	
+		return vector<wchar_t>(2, L'\0'); //Build a vector that contains two \0
+	
+
+	//Get the multi-string size 
+	size_t multiStringLenght{ 0 };
+	for(const auto& str : data)
+	{
+		multiStringLenght += str.length() + 1; //+1 for the coming '\0'
+	}
+
+	multiStringLenght++; //This +1 is for the last '\0' (double NUL-termination)
+
+
+	vector<wchar_t> result;
+	result.reserve(multiStringLenght);
+	for (const auto& str : data)
+	{
+		//Insert the wstring into the multi-string
+		result.insert(result.end(), str.begin(), str.end());
+		//NUL-terminate the current string
+		result.push_back(L'\0');
+	}
+
+	//Double NUL-termination
+	result.push_back(L'\0');
+
+	return result;
 }

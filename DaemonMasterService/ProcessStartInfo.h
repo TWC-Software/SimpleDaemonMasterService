@@ -53,6 +53,12 @@ public:
 	const bool GetAssignAutoKillJob() const;
 	void SetAssignAutoKillJob(const bool assignAutoKillJob);
 
+	const int GetPriority() const;
+	void SetPriority(const int priority);
+
+
+
+
 private:
 	std::wstring _fileDir = L"";
 	std::wstring _fileName = L"";
@@ -68,4 +74,5 @@ private:
 	bool _useCtrlC = false;
 
 	bool _assignAutoKillJob = true;
+	int _priority = 0;
 };
