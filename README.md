@@ -1,1 +1,1 @@
-# DaemonMasterService
+# SimpleDaemonMasterService
